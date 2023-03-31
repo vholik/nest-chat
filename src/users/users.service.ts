@@ -1,13 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto';
 import { PrismaService } from 'src/prisma';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getById(id: number) {
-    const user = await this.prismaService.user.findFirst({
+    const user = await this.prisma.user.findFirst({
       where: {
         id,
       },
@@ -23,7 +24,7 @@ export class UsersService {
   }
 
   async getByEmail(email: string) {
-    const user = await this.prismaService.user.findFirst({
+    const user = await this.prisma.user.findFirst({
       where: {
         email,
       },
@@ -38,10 +39,46 @@ export class UsersService {
   }
 
   async create(userData: CreateUserDto) {
-    const newUser = await this.prismaService.user.create({
+    const newUser = await this.prisma.user.create({
       data: userData,
     });
 
     return newUser;
+  }
+
+  async setCurrentRefreshToken(refreshToken: string, userId: number) {
+    const currentHashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        currentHashedRefreshToken,
+      },
+    });
+  }
+
+  async getUserIfRefreshTokenMatches(refreshToken: string, userId: number) {
+    const user = await this.getById(userId);
+
+    const isRefreshTokenMatching = await bcrypt.compare(
+      refreshToken,
+      user.currentHashedRefreshToken,
+    );
+
+    if (isRefreshTokenMatching) {
+      return user;
+    }
+  }
+
+  async removeRefreshToken(userId: number) {
+    return this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        currentHashedRefreshToken: null,
+      },
+    });
   }
 }
