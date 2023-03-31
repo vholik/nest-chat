@@ -1,15 +1,25 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UsersService } from 'src/users';
 import * as bcrypt from 'bcrypt';
+import { RegisterDto } from './dto';
+import { JwtService } from '@nestjs/jwt';
+import TokenPayload from './token-payload.interface';
+import { PrismaService } from 'src/prisma';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async register(registrationData: RegisterDto) {
-    const candidate = await this.usersService.getByEmail(
-      registrationData.email,
-    );
+    const candidate = await this.prisma.user.findFirst({
+      where: {
+        email: registrationData.email,
+      },
+    });
 
     if (candidate) {
       throw new HttpException(
@@ -61,5 +71,15 @@ export class AuthService {
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  getCookieWithJwtToken(userId: number) {
+    const payload: TokenPayload = { userId };
+    const token = this.jwtService.sign(payload);
+    return `Authentication=${token}; HttpOnly; Path=/; Max-Age=${process.env.JWT_EXPIRATION_TIME}`;
+  }
+
+  getCookieForLogOut() {
+    return `Authentication=; HttpOnly; Path=/; Max-Age=0`;
   }
 }

@@ -1,10 +1,26 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
 import { CreateUserDto } from './dto';
+import { PrismaService } from 'src/prisma';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
+
+  async getById(id: number) {
+    const user = await this.prismaService.user.findFirst({
+      where: {
+        id,
+      },
+    });
+    if (!user) {
+      throw new HttpException(
+        'User with this email does not exist',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return user;
+  }
 
   async getByEmail(email: string) {
     const user = await this.prismaService.user.findFirst({
