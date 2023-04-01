@@ -16,4 +16,19 @@ model User {
   name  String?
   password String
   currentHashedRefreshToken String? 
+  rooms Room[]
 }
+
+model Room {
+  id    Int     @default(autoincrement()) @id
+  users User[]
+}
+
+model Message {
+  id    Int     @default(autoincrement()) @id
+  text String 
+  date DateTime @default(now())
+  hasRead Boolean @default(false)
+}
+
+
