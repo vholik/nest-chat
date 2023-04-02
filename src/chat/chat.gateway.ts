@@ -12,6 +12,7 @@ import { CustomSocket } from './auth.adapter';
 import { ChatService } from './chat.service';
 import { JoinRoomDto } from './dto';
 import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import { SendMessageDto } from './dto/send-message.dto';
 
 @WebSocketGateway({
   cors: {
@@ -32,22 +33,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('joinRoom')
   async joinRoom(
     @ConnectedSocket() socket: CustomSocket,
-    @MessageBody() message: JoinRoomDto,
+    // @MessageBody() message: JoinRoomDto,
   ) {
     const userId = socket.user.id;
-    const roomId = String(message.roomId); // Cascade to string
+    const UserIdString = String(userId);
 
-    socket.join(roomId);
+    socket.join(UserIdString);
 
     console.log(socket.rooms); // Set(2) { 'aqsgHhgsqiVVawb7AAAB', '1' }
   }
 
+  @UsePipes(new ValidationPipe()) // Check DTO
   @SubscribeMessage('sendMessage')
-  sendMessage(
-    @MessageBody() message: string,
-    @ConnectedSocket() socket: CustomSocket,
-  ) {
-    const userId = socket.user.id;
+  sendMessage(@MessageBody() data: SendMessageDto) {
+    const { forwardedId, message } = data;
+
+    this.server.to(String(forwardedId)).emit('privateMessage', { message });
   }
 
   @SubscribeMessage('incomeMessageListener')
