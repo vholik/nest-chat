@@ -1,7 +1,9 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
-import { CreateRoomDto } from './dto';
+import { CreateRoomDto, GetRoomsDto } from './dto';
 import JwtAuthenticationGuard from 'src/auth/jwt-authentication.guard';
+import { Request } from 'express';
+import { User } from '@prisma/client';
 
 @Controller('rooms')
 export class RoomsController {
@@ -9,9 +11,21 @@ export class RoomsController {
 
   @Post()
   @UseGuards(JwtAuthenticationGuard)
-  createRoom(@Body() dto: CreateRoomDto) {
+  createRoom(@Body() dto: CreateRoomDto, @Req() req: Request) {
     const { forwardedId } = dto;
 
-    // return this.roomsService.createRoom();
+    const user = req.user as User;
+
+    return this.roomsService.createRoom(forwardedId, user.id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthenticationGuard)
+  getRooms(@Body() dto: GetRoomsDto, @Req() req: Request) {
+    const { page, pageSize } = dto;
+
+    const user = req.user as User;
+
+    return this.roomsService.getRooms(user.id, page, pageSize);
   }
 }

@@ -10,6 +10,8 @@ import {
 import { Server, Socket } from 'socket.io';
 import { CustomSocket } from './auth.adapter';
 import { ChatService } from './chat.service';
+import { JoinRoomDto } from './dto';
+import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
@@ -26,12 +28,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(socket.user);
   }
 
+  @UsePipes(new ValidationPipe()) // Check DTO
   @SubscribeMessage('joinRoom')
-  async joinRoom(@ConnectedSocket() socket: CustomSocket) {
-    const forwardedId = parseInt(socket.handshake.query.forwardedId as string);
+  async joinRoom(
+    @ConnectedSocket() socket: CustomSocket,
+    @MessageBody() message: JoinRoomDto,
+  ) {
     const userId = socket.user.id;
+    const roomId = String(message.roomId); // Cascade to string
 
-    await this.chatService.joinRoom(forwardedId, userId);
+    socket.join(roomId);
+
+    console.log(socket.rooms); // Set(2) { 'aqsgHhgsqiVVawb7AAAB', '1' }
+  }
+
+  @SubscribeMessage('sendMessage')
+  sendMessage(
+    @MessageBody() message: string,
+    @ConnectedSocket() socket: CustomSocket,
+  ) {
+    const userId = socket.user.id;
   }
 
   @SubscribeMessage('incomeMessageListener')

@@ -5,5 +5,5 @@ import { PrismaService } from 'src/prisma';
 export class ChatService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async joinRoom(forwardedId: number, userId: number) {}
+  async joinRoom(roomId: number, userId: number) {}
 }
