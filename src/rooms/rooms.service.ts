@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma';
 
 @Injectable()
-export class ChatService {
+export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async joinRoom(forwardedId: number, userId: number) {}
+  async createRoom(forwardedId: number, userId: number) {}
 }
