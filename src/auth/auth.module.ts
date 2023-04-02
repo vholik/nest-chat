@@ -15,7 +15,7 @@ import { PrismaModule } from 'src/prisma/prisma.module';
     UsersModule,
     JwtModule.registerAsync({
       useFactory: async () => ({
-        secret: 'hello',
+        secret: process.env.JWT_ACESS_TOKEN_SECRET,
         signOptions: {
           expiresIn: '15m',
         },
